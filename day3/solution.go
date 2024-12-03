@@ -29,5 +29,25 @@ func (d *Day3) SolveSimple() string {
 }
 
 func (d *Day3) SolveAdvanced() string {
-	return ""
+	re, _ := regexp.Compile("do\\(\\)|don't\\(\\)|mul\\((\\d{1,3}),(\\d{1,3})\\)")
+	var total int64
+	do := true
+	for _, line := range d.lines {
+		for _, match := range re.FindAllStringSubmatch(line, -1) {
+			switch match[0] {
+			case "don't()":
+				do = false
+			case "do()":
+				do = true
+			default:
+				a, _ := strconv.Atoi(match[1])
+				b, _ := strconv.Atoi(match[2])
+				if do {
+					total += int64(a * b)
+				}
+			}
+		}
+	}
+
+	return fmt.Sprint(total)
 }
