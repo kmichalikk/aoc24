@@ -12,11 +12,17 @@ const (
 	right
 )
 
+type triple struct {
+	x, y, z int
+}
+
 type Day6 struct {
-	area          [][]int32
-	xpos, ypos    int
-	width, height int
-	direction     int
+	area               [][]int32
+	xpos, ypos         int
+	initXPos, initYPos int
+	width, height      int
+	direction          int
+	initDirection      int
 }
 
 func (d *Day6) Init(lines []string) {
@@ -44,6 +50,9 @@ func (d *Day6) Init(lines []string) {
 			}
 		}
 	}
+
+	d.initXPos, d.initYPos = d.xpos, d.ypos
+	d.initDirection = d.direction
 }
 
 func (d *Day6) SolveSimple() string {
@@ -91,9 +100,11 @@ func (d *Day6) SolveSimple() string {
 		}
 	}
 
-	sum := 1 // 1 for last step
-	for i, lines := range d.area {
-		for j := range lines {
+	d.area[d.ypos][d.xpos] = 'X'
+
+	sum := 0
+	for i, line := range d.area {
+		for j := range line {
 			if d.area[i][j] == 'X' {
 				sum++
 			}
@@ -121,5 +132,68 @@ func nextDirection(dir int) int {
 }
 
 func (d *Day6) SolveAdvanced() string {
-	return ""
+	possibilities := 0
+	for i, lines := range d.area {
+		for j := range lines {
+			if d.area[i][j] == 'X' && (i != d.initYPos || j != d.initXPos) {
+				d.area[i][j] = '#'
+				if d.hasLoop() {
+					possibilities++
+				}
+				d.area[i][j] = 'X'
+			}
+		}
+	}
+
+	return fmt.Sprintf("%d", possibilities)
+}
+
+func (d *Day6) hasLoop() bool {
+	turns := make(map[triple]bool)
+
+	d.xpos, d.ypos = d.initXPos, d.initYPos
+	d.direction = d.initDirection
+	xstep, ystep := 0, 0
+	for {
+		xstep, ystep = 0, 0
+		switch d.direction {
+		case up:
+			if d.ypos == 0 {
+				return false
+			} else {
+				ystep--
+			}
+		case right:
+			if d.xpos == d.width-1 {
+				return false
+			} else {
+				xstep++
+			}
+		case down:
+			if d.ypos == d.height-1 {
+				return false
+			} else {
+				ystep++
+			}
+		case left:
+			if d.xpos == 0 {
+				return false
+			} else {
+				xstep--
+			}
+		}
+
+		if d.area[d.ypos+ystep][d.xpos+xstep] == '#' {
+			t := triple{d.xpos, d.ypos, d.direction}
+			if turns[t] {
+				return true
+			}
+
+			turns[t] = true
+			d.direction = nextDirection(d.direction)
+		} else {
+			d.xpos += xstep
+			d.ypos += ystep
+		}
+	}
 }
