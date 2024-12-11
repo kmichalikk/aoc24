@@ -41,24 +41,60 @@ func (d *Day11) SolveSimple() string {
 			continue
 		}
 
-		w := int(math.Log10(float64(p.v))) + 1
-
-		switch {
-		case p.v == 0:
+		if p.v == 0 {
 			stack = append(stack, pair{p.n + 1, 1})
-		case w%2 == 0:
+			continue
+		}
+
+		w := int(math.Log10(float64(p.v))) + 1
+		if w%2 == 0 {
 			div := int64(math.Pow10(w / 2))
 			stack = append(stack, pair{p.n + 1, p.v / div})
 			stack = append(stack, pair{p.n + 1, p.v % div})
-		default:
-			stack = append(stack, pair{p.n + 1, 2024 * p.v})
+			continue
 		}
+
+		stack = append(stack, pair{p.n + 1, 2024 * p.v})
 	}
 
 	return fmt.Sprintf("%d\n", total)
 }
 
 func (d *Day11) SolveAdvanced() string {
-	d.steps = 45
-	return d.SolveSimple()
+	d.steps = 75
+	var total int64 = 0
+	memo := make(map[pair]int64)
+	var visit func(int64, int) int64
+	visit = func(v int64, depth int) int64 {
+		p := pair{depth, v}
+		m, ok := memo[p]
+		if ok {
+			return m
+		}
+
+		if depth == d.steps {
+			return 1
+		}
+
+		if p.v == 0 {
+			memo[p] = visit(1, depth+1)
+			return memo[p]
+		}
+
+		w := int(math.Log10(float64(p.v))) + 1
+		if w%2 == 0 {
+			div := int64(math.Pow10(w / 2))
+			memo[p] = visit(p.v/div, depth+1) + visit(p.v%div, depth+1)
+			return memo[p]
+		}
+
+		memo[p] = visit(2024*p.v, depth+1)
+		return memo[p]
+	}
+
+	for i := range d.numbers {
+		total += visit(d.numbers[len(d.numbers)-i-1], 0)
+	}
+
+	return fmt.Sprintf("%d\n", total)
 }
