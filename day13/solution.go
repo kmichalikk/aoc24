@@ -3,6 +3,7 @@ package day13
 import (
 	"fmt"
 	"log"
+	"math"
 	"regexp"
 	"strconv"
 )
@@ -93,5 +94,27 @@ func (d *Day13) SolveSimple() string {
 }
 
 func (d *Day13) SolveAdvanced() string {
-	return ""
+	total := int64(0)
+	for i, trials := range d.arcades {
+		x0, x1 := float64(trials.a.x), float64(trials.b.x)
+		y0, y1 := float64(trials.a.y), float64(trials.b.y)
+		xPrize, yPrize := float64(trials.prize.x+10000000000000), float64(trials.prize.y+10000000000000)
+
+		p1 := y0 / x0
+		y1 -= x1 * p1
+		yPrize -= xPrize * p1
+		p0 := x1 / y1
+		xPrize -= yPrize * p0
+
+		a := int64(math.Round(xPrize / x0))
+		b := int64(math.Round(yPrize / y1))
+
+		fmt.Printf("%d %d\n", a, b)
+		if a*trials.a.x+b*trials.b.x == trials.prize.x+10000000000000 && a*trials.a.y+b*trials.b.y == trials.prize.y+10000000000000 {
+			fmt.Println(i)
+			total += a*3 + b
+		}
+	}
+
+	return fmt.Sprintf("%d\n", total)
 }
