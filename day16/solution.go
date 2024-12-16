@@ -3,6 +3,7 @@ package day16
 import (
 	"container/heap"
 	"fmt"
+	"slices"
 )
 
 type position struct {
@@ -72,12 +73,23 @@ func (d *Day16) Init(lines []string) {
 	}
 }
 
-func (d *Day16) SolveSimple() string {
+func (d *Day16) dijkstra(initial []pqItem) [][][]int {
+	distances := make([][][]int, len(d.area))
+	for i := range distances {
+		distances[i] = make([][]int, len(d.area[i]))
+		for j := range distances[i] {
+			val := 2000 * len(d.area) * len(d.area[0])
+			distances[i][j] = []int{val, val, val, val}
+		}
+	}
+
 	pq := priorityQueue{}
 	heap.Init(&pq)
-	heap.Push(&pq, &pqItem{vector{d.start, right}, 0})
+	for _, it := range initial {
+		heap.Push(&pq, &it)
+	}
+
 	visited := make(map[vector]bool)
-	var result int
 	for pq.Len() > 0 {
 		item := heap.Pop(&pq).(*pqItem)
 		if visited[item.vec] {
@@ -87,11 +99,7 @@ func (d *Day16) SolveSimple() string {
 		visited[item.vec] = true
 		pos := item.vec.p
 		dir := item.vec.d
-
-		if pos == d.end {
-			result = item.metric
-			break
-		}
+		distances[pos.y][pos.x][dir] = item.metric
 
 		// up
 		if pos.y-1 >= 0 && dir != down && d.area[pos.y-1][pos.x] != '#' {
@@ -127,9 +135,57 @@ func (d *Day16) SolveSimple() string {
 		}
 	}
 
-	return fmt.Sprintf("%d\n", result)
+	return distances
+}
+
+func (d *Day16) SolveSimple() string {
+	distances := d.dijkstra([]pqItem{{vector{d.start, right}, 0}})
+
+	return fmt.Sprintf("%d\n", slices.Min(distances[d.end.y][d.end.x]))
 }
 
 func (d *Day16) SolveAdvanced() string {
-	return ""
+	distancesFromStart := d.dijkstra([]pqItem{{vector{d.start, right}, 0}})
+	distancesFromEnd := d.dijkstra([]pqItem{
+		{vector{d.end, up}, 0},
+		{vector{d.end, down}, 0},
+		{vector{d.end, right}, 0},
+		{vector{d.end, left}, 0},
+	})
+
+	target := slices.Min(distancesFromStart[d.end.y][d.end.x])
+	viablePositions := make(map[position]bool)
+
+	for y := range len(d.area) {
+		for x := range d.area[y] {
+			if d.area[y][x] == '#' {
+				continue
+			}
+
+			if distancesFromStart[y][x][up]+distancesFromEnd[y][x][down] == target ||
+				distancesFromStart[y][x][down]+distancesFromEnd[y][x][up] == target ||
+				distancesFromStart[y][x][left]+distancesFromEnd[y][x][right] == target ||
+				distancesFromStart[y][x][right]+distancesFromEnd[y][x][left] == target {
+				viablePositions[position{x, y}] = true
+			}
+
+			if distancesFromStart[y][x][up]+distancesFromEnd[y][x][right]+1000 == target ||
+				distancesFromStart[y][x][up]+distancesFromEnd[y][x][left]+1000 == target ||
+				distancesFromStart[y][x][down]+distancesFromEnd[y][x][right]+1000 == target ||
+				distancesFromStart[y][x][down]+distancesFromEnd[y][x][left]+1000 == target ||
+				distancesFromStart[y][x][left]+distancesFromEnd[y][x][up]+1000 == target ||
+				distancesFromStart[y][x][left]+distancesFromEnd[y][x][down]+1000 == target ||
+				distancesFromStart[y][x][right]+distancesFromEnd[y][x][up]+1000 == target ||
+				distancesFromStart[y][x][right]+distancesFromEnd[y][x][down]+1000 == target {
+				viablePositions[position{x, y}] = true
+			}
+		}
+	}
+
+	count := 0
+	for range viablePositions {
+		count++
+	}
+
+	return fmt.Sprintf("%d\n", count)
 }
