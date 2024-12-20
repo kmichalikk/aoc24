@@ -1,7 +1,7 @@
 package main
 
 import (
-	"aoc24/day19"
+	"aoc24/day20"
 	"bufio"
 	"fmt"
 	"log"
@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	file, err := os.Open("./day19/data.txt")
+	file, err := os.Open("./day20/data.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,7 +20,7 @@ func main() {
 		lines = append(lines, scanner.Text())
 	}
 
-	problem := day19.Day19{}
+	problem := day20.Day20{}
 	problem.Init(lines)
 
 	fmt.Println(problem.SolveSimple())
